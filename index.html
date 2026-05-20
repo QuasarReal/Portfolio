@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- ═══ Primary SEO ═══ -->
-    <title>Quasar | Flutter Developer & Chess Player | Portfolio</title>
+    <title>Quasar Portfolio</title>
     <meta name="description" content="Quasar - Flutter developer specializing in high-performance cross-platform Android applications with Clean Architecture, State Management, and scalable code. Active chess player combining strategic thinking with engineering excellence.">
     <meta name="keywords" content="Quasar, Flutter developer, Dart, Android developer, cross-platform developer, mobile app developer, Clean Code, State Management, chess player, portfolio, software engineer, تطوير تطبيقات, مطور فلاتر, شطرنج">
     <meta name="author" content="Quasar">
@@ -1017,9 +1017,9 @@
             const isMobile = window.innerWidth <= 600;
             
             if (isMobile) {
-                if (aspect < 0.65) return 22.0;
-                if (aspect < 0.85) return 19.0;
-                if (aspect < 1.0)  return 17.0;
+                if (aspect < 0.65) return 16.0;
+                if (aspect < 0.85) return 15.0;
+                if (aspect < 1.0)  return 14.5;
             }
             
             return 14.80;
@@ -1051,9 +1051,7 @@
 
         bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            isMobile ? 0.5 : 0.9,
-            isMobile ? 0.4 : 0.6,
-            isMobile ? 0.7 : 0.75
+            0.9, 0.6, 0.75
         );
         composer.addPass(bloomPass);
 
@@ -1148,30 +1146,17 @@
         let starsMesh;
         let starMaterial;
 
-        if (isMobile) {
-            // Simple PointsMaterial on mobile - no shaders, no twinkle
-            starMaterial = new THREE.PointsMaterial({
-                size: 1.8,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.85,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false,
-                sizeAttenuation: true
-            });
-            starsMesh = new THREE.Points(starGeometry, starMaterial);
-            scene.add(starsMesh);
-        } else {
-            const starSizes = new Float32Array(starCount);
-            const starTwinkle = new Float32Array(starCount);
-            for (let i = 0; i < starCount; i++) {
-                starSizes[i] = THREE.MathUtils.randFloat(0.6, 2.8);
-                starTwinkle[i] = Math.random() * Math.PI * 2;
-            }
-            starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
-            starGeometry.setAttribute('twinkle', new THREE.BufferAttribute(starTwinkle, 1));
+        // Same shader stars for all devices
+        const starSizes = new Float32Array(starCount);
+        const starTwinkle = new Float32Array(starCount);
+        for (let i = 0; i < starCount; i++) {
+            starSizes[i] = THREE.MathUtils.randFloat(0.6, 2.8);
+            starTwinkle[i] = Math.random() * Math.PI * 2;
+        }
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+        starGeometry.setAttribute('twinkle', new THREE.BufferAttribute(starTwinkle, 1));
 
-            starMaterial = new THREE.ShaderMaterial({
+        starMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     uTime: { value: 0 },
                     uPixelRatio: { value: renderer.getPixelRatio() }
@@ -1207,14 +1192,13 @@
                 blending: THREE.AdditiveBlending,
                 depthWrite: false
             });
-            starsMesh = new THREE.Points(starGeometry, starMaterial);
-            scene.add(starsMesh);
-        }
+        starsMesh = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starsMesh);
 
         // ─── EVENT HORIZON GLOW ─────────────────────────────────────
         let eventHorizonMat;
         {
-            const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, isMobile ? 48 : 128, isMobile ? 32 : 64);
+            const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, 128, 64);
             eventHorizonMat = new THREE.ShaderMaterial({
                 uniforms: {
                     uTime: { value: 0 },
@@ -1251,14 +1235,14 @@
             blackHoleGroup.add(eventHorizon);
         }
 
-        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, isMobile ? 32 : 64, isMobile ? 32 : 64);
+        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, 64, 64);
         const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
         const blackHoleMesh = new THREE.Mesh(blackHoleGeom, blackHoleMat);
         blackHoleMesh.renderOrder = 0;
         blackHoleGroup.add(blackHoleMesh);
 
         // ─── ACCRETION DISK ──────────────────────────────────────────
-        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, isMobile ? 128 : 256, isMobile ? 64 : 128);
+        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, 256, 128);
         const diskMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0.0 },
@@ -1405,10 +1389,7 @@
             lensingPass.uniforms.lensingRadius.value = 0.22;
         }
 
-        // ─── SCALE BLACK HOLE ON MOBILE ──────────────────────────────────
-        if (isMobile) {
-            blackHoleGroup.scale.setScalar(0.5);
-        }
+        // ─── NO SCALE ON MOBILE — full size ─────────────────────────────
 
         // ─── RESIZE HANDLER ──────────────────────────────────────────
         window.addEventListener('resize', () => {
@@ -1474,13 +1455,15 @@
 
                 composer.render(deltaTime);
             } else {
-                // Mobile: stars + black hole (scaled 0.5), bloom post-processing
+                // Mobile: same scene as desktop, bloom, no lensing
+                starMaterial.uniforms.uTime.value = elapsedTime;
                 diskMaterial.uniforms.uTime.value = elapsedTime;
                 eventHorizonMat.uniforms.uTime.value = elapsedTime;
                 eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
 
                 const rotationMultiplier = isScrolling ? 0.3 : 1.0;
-                starsMesh.rotation.y += deltaTime * 0.001 * rotationMultiplier;
+                starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
+                starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
                 accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
 
                 composer.render(deltaTime);
