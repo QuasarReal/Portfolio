@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Quasar - Flutter Developer & Chess Player Portfolio">
+    <meta property="og:title" content="Quasar | Portfolio">
+    <meta property="og:description" content="Flutter Developer & Chess Player">
+    <meta property="og:type" content="website">
+    <title>Quasar | Portfolio</title>
+    <link rel="icon" type="image/jpeg" href="./Quasar.jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --surface-about: rgba(0, 0, 0, 0.82);
+            --surface-card: rgba(0, 0, 0, 0.72);
+            --border-subtle: rgba(255, 183, 0, 0.12);
+            --border-hover: rgba(255, 183, 0, 0.35);
+            --text-primary: #ffffff;
+            --text-secondary: #e2e8f0;
+            --text-muted: #888888;
+            --quasar-gold: #ffb700;
+            --card-blur: 15px;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 183, 0, 0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--quasar-gold); }
+
+        /* ─── BODY & LAYOUT ────────────────────────────────── */
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 100vh;
+            scroll-behavior: smooth;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000000;
+            z-index: 0;
+        }
+
+        #three-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 1;
+            will-change: contents;
+        }
+
+        .page-content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 80px 20px 40px 20px;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 620px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInContainer 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+        }
+
+        /* ─── PROFILE SECTION ──────────────────────────────── */
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 15px;
+        }
+        
+        .profile-img-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .profile-glow-ring {
+            position: absolute;
+            top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(#000, #000) padding-box,
+                linear-gradient(
+                    135deg,
+                    rgba(255, 183, 0, 0.4) 0%,
+                    rgba(255, 220, 100, 0.2) 50%,
+                    rgba(255, 183, 0, 0.4) 100%
+                ) border-box;
+            filter: blur(3px);
+            animation: simpleRotate 12s linear infinite;
+            opacity: 0.85;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes simpleRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .profile-img-container:hover {
+            transform: translateY(-3px);
+        }
+
+        .profile-img-container:hover .profile-glow-ring {
+            opacity: 1;
+            filter: blur(4px);
+            box-shadow: 0 0 30px rgba(255, 183, 0, 0.4);
+            border: 2px solid rgba(255, 183, 0, 0.6);
+        }
+
+        .profile-img {
+            width: 142px; height: 142px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: none;
+            background-color: #111;
+            z-index: 2;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .profile-img-container:hover .profile-img {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 183, 0, 0.2);
+        }
+
+        .profile-section h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            font-family: 'Sora', 'Cairo', sans-serif;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            position: relative;
+            color: #ffffff;
+            text-shadow:
+                0 0 7px rgba(255, 183, 0, 0.6),
+                0 0 20px rgba(255, 183, 0, 0.35),
+                0 0 42px rgba(255, 183, 0, 0.2),
+                0 0 80px rgba(255, 183, 0, 0.1),
+                0 0 120px rgba(255, 140, 0, 0.08);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: default;
+            animation: nameRevealGlow 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes nameRevealGlow {
+            0% {
+                opacity: 0;
+                text-shadow:
+                    0 0 3px rgba(255, 183, 0, 0.1);
+                transform: scale(0.92);
+            }
+            60% {
+                text-shadow:
+                    0 0 10px rgba(255, 183, 0, 0.8),
+                    0 0 30px rgba(255, 183, 0, 0.5),
+                    0 0 60px rgba(255, 183, 0, 0.3),
+                    0 0 100px rgba(255, 183, 0, 0.15);
+            }
+            100% {
+                opacity: 1;
+                text-shadow:
+                    0 0 7px rgba(255, 183, 0, 0.6),
+                    0 0 20px rgba(255, 183, 0, 0.35),
+                    0 0 42px rgba(255, 183, 0, 0.2),
+                    0 0 80px rgba(255, 183, 0, 0.1),
+                    0 0 120px rgba(255, 140, 0, 0.08);
+                transform: scale(1);
+            }
+        }
+
+        .profile-section h1:hover {
+            text-shadow:
+                0 0 10px rgba(255, 183, 0, 0.8),
+                0 0 30px rgba(255, 183, 0, 0.5),
+                0 0 60px rgba(255, 183, 0, 0.3),
+                0 0 100px rgba(255, 183, 0, 0.15),
+                0 0 150px rgba(255, 140, 0, 0.1);
+            transform: translateY(-3px) scale(1.03);
+        }
+
+        /* ─── SUBTITLE + TYPING EFFECT ─────────────────────── */
+        .profile-section .subtitle {
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            font-family: 'Sora', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            min-height: 40px;
+            padding: 10px 24px;
+            background: linear-gradient(145deg, rgba(18, 18, 18, 0.85) 0%, rgba(8, 8, 8, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 50px;
+            backdrop-filter: url(#liquidGlassFilter) blur(12px) contrast(1.15) brightness(1.08);
+            -webkit-backdrop-filter: url(#liquidGlassFilter) blur(12px) contrast(1.15) brightness(1.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            transition: border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .profile-section .subtitle::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 15%; right: 15%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 183, 0, 0.12), transparent);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .profile-section .subtitle::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 20%; right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 183, 0, 0.06), transparent);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .profile-section .subtitle:hover {
+            border-color: rgba(255, 183, 0, 0.2);
+            box-shadow: 0 8px 25px rgba(255, 183, 0, 0.08), 0 0 15px rgba(255, 183, 0, 0.04);
+        }
+
+        #typing-text {
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 12px rgba(255, 183, 0, 0.25);
+            transition: text-shadow 0.4s ease;
+            display: inline;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1em;
+            background: var(--quasar-gold);
+            margin-left: 4px;
+            margin-right: 0;
+            vertical-align: text-bottom;
+            border-radius: 1px;
+            box-shadow: 0 0 6px rgba(255, 183, 0, 0.6), 0 0 12px rgba(255, 183, 0, 0.3);
+            animation: cursorGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes cursorGlow {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 0 6px rgba(255, 183, 0, 0.6), 0 0 12px rgba(255, 183, 0, 0.3);
+            }
+            50% {
+                opacity: 0.4;
+                box-shadow: 0 0 2px rgba(255, 183, 0, 0.3);
+            }
+        }
+
+        /* ─── ABOUT CARD ───────────────────────────────────── */
+        .about-card {
+            width: 100%;
+            background: linear-gradient(145deg, rgba(18, 18, 18, 0.9) 0%, rgba(8, 8, 8, 0.92) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 24px;
+            padding: 32px 36px;
+            text-align: right;
+            line-height: 2;
+            font-size: 0.98rem;
+            color: rgba(255, 255, 255, 0.85);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.8),
+                0 4px 15px rgba(0, 0, 0, 0.6);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: url(#liquidGlassFilter) blur(20px) contrast(1.25) brightness(1.15) saturate(1.3);
+            -webkit-backdrop-filter: url(#liquidGlassFilter) blur(20px) contrast(1.25) brightness(1.15) saturate(1.3);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .about-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 15%; right: 15%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+            pointer-events: none;
+        }
+
+        .about-card::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255, 183, 0, 0.02) 0%, transparent 70%);
+            animation: rotateGradient 15s linear infinite;
+            pointer-events: none;
+        }
+        
+        .about-card:hover {
+            border-color: rgba(255, 183, 0, 0.25);
+            transform: translateY(-2px);
+            backdrop-filter: url(#liquidGlassFilter) blur(15px) contrast(1.2) brightness(1.12);
+            -webkit-backdrop-filter: url(#liquidGlassFilter) blur(15px) contrast(1.2) brightness(1.12);
+            box-shadow: 0 8px 25px rgba(255, 183, 0, 0.1), 0 0 15px rgba(255, 183, 0, 0.05);
+        }
+
+        @keyframes rotateGradient {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .about-card strong { 
+            color: var(--text-primary); 
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: default;
+            display: inline-block;
+        }
+
+        .about-card strong:hover {
+            color: var(--quasar-gold);
+            text-shadow: 0 0 10px rgba(255, 183, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* ─── SOCIAL LINKS ─────────────────────────────────── */
+        .links-grid {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(145deg, rgba(18, 18, 18, 0.9) 0%, rgba(8, 8, 8, 0.92) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 12px 20px;
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.84rem;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Sora', 'Cairo', sans-serif;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            backdrop-filter: url(#liquidGlassFilter) blur(12px) contrast(1.15) brightness(1.08);
+            -webkit-backdrop-filter: url(#liquidGlassFilter) blur(12px) contrast(1.15) brightness(1.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 15%; right: 15%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+            pointer-events: none;
+        }
+        
+        .link-item i {
+            font-size: 1rem;
+            color: rgba(255, 183, 0, 0.5);
+            transition: color 0.3s, transform 0.3s;
+        }
+        
+        .link-item:hover {
+            background: linear-gradient(145deg, rgba(255, 183, 0, 0.08) 0%, rgba(255, 183, 0, 0.03) 100%);
+            color: var(--text-primary);
+            border-color: rgba(255, 183, 0, 0.25);
+            transform: translateY(-2px);
+            backdrop-filter: url(#liquidGlassFilter) blur(15px) contrast(1.2) brightness(1.12);
+            -webkit-backdrop-filter: url(#liquidGlassFilter) blur(15px) contrast(1.2) brightness(1.12);
+            box-shadow: 0 8px 25px rgba(255, 183, 0, 0.1), 0 0 15px rgba(255, 183, 0, 0.05);
+        }
+        
+        .link-item:hover i { color: var(--quasar-gold); transform: scale(1.1); }
+
+        /* Focus styles for accessibility */
+        .link-item:focus-visible {
+            outline: 2px solid var(--quasar-gold);
+            outline-offset: 3px;
+        }
+
+        /* ─── FOOTER ───────────────────────────────────────── */
+        .site-footer {
+            width: 100%;
+            max-width: 620px;
+            text-align: center;
+            padding: 30px 20px 10px 20px;
+            pointer-events: auto;
+        }
+
+        .site-footer p {
+            font-size: 0.68rem;
+            color: rgba(255, 255, 255, 0.2);
+            font-family: 'Sora', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* ─── ANIMATIONS ───────────────────────────────────── */
+        @keyframes fadeInContainer {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.85); opacity: 0.3; }
+            50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 10px 2px var(--quasar-gold); }
+            100% { transform: scale(0.85); opacity: 0.3; }
+        }
+
+        /* ─── BROWSER COMPATIBILITY FALLBACKS ──────────────── */
+        @supports not (backdrop-filter: blur(10px)) {
+            .about-card,
+            .link-item,
+            .profile-section .subtitle {
+                background: rgba(12, 12, 12, 0.95);
+            }
+        }
+
+        /* ─── MOBILE RESPONSIVENESS ────────────────────────── */
+        @media (max-width: 600px) {
+            body {
+                overflow-x: hidden;
+            }
+
+
+
+            .page-content {
+                padding: 60px 18px 40px 18px;
+            }
+
+            .container {
+                gap: 26px;
+                max-width: 100%;
+            }
+
+            .profile-img-container {
+                width: 130px;
+                height: 130px;
+            }
+
+            .profile-img {
+                width: 115px;
+                height: 115px;
+            }
+
+            .profile-section h1 {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            .profile-section .subtitle {
+                font-size: 0.72rem;
+                letter-spacing: 2px;
+                padding: 7px 16px;
+            }
+
+            .about-card {
+                padding: 26px 26px;
+                font-size: 0.92rem;
+                line-height: 1.9;
+                border-radius: 20px;
+            }
+
+            .links-grid {
+                gap: 10px;
+            }
+
+            .link-item {
+                padding: 11px 18px;
+                font-size: 0.82rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+
+            .page-content {
+                padding: 50px 16px 40px 16px;
+            }
+
+            .profile-section h1 {
+                font-size: 1.75rem;
+            }
+
+            .profile-section .subtitle {
+                font-size: 0.68rem;
+                letter-spacing: 1.5px;
+            }
+
+            .about-card {
+                padding: 22px 22px;
+                font-size: 0.88rem;
+            }
+
+            .link-item {
+                padding: 10px 16px;
+                font-size: 0.78rem;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+
+            .page-content {
+                padding: 30px 20px 30px 20px;
+            }
+
+            .profile-img-container {
+                width: 100px;
+                height: 100px;
+            }
+
+            .profile-img {
+                width: 90px;
+                height: 90px;
+            }
+
+            .profile-section h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+      }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- SVG Liquid Glass Filter -->
+    <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="liquidGlassFilter" x="-50%" y="-50%" width="200%" height="200%">
+                <feTurbulence 
+                    type="fractalNoise" 
+                    baseFrequency="0.015 0.02" 
+                    numOctaves="2" 
+                    seed="2" 
+                    result="noise" />
+                <feColorMatrix 
+                    in="noise" 
+                    type="matrix" 
+                    values="1 0 0 0 0
+                            0 1 0 0 0
+                            0 0 1 0 0
+                            0 0 0 18 -7" 
+                    result="adjustedNoise" />
+                <feGaussianBlur 
+                    in="adjustedNoise" 
+                    stdDeviation="1.2" 
+                    result="blurredNoise" />
+                <feComposite 
+                    in="SourceGraphic" 
+                    in2="blurredNoise" 
+                    operator="in" 
+                    result="composite" />
+                <feBlend 
+                    in="composite" 
+                    in2="SourceGraphic" 
+                    mode="overlay" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Three.js 3D Canvas -->
+    <canvas id="three-canvas"></canvas>
+
+    <!-- Page Content Container -->
+    <div class="page-content">
+        <div class="container">
+            <!-- Profile Section -->
+            <div class="profile-section">
+                <div class="profile-img-container">
+                    <div class="profile-glow-ring"></div>
+                    <img class="profile-img" src="./Quasar.jpeg" alt="Quasar Profile Photo">
+                </div>
+                <h1>Quasar</h1>
+                <div class="subtitle"><span class="typing-cursor"></span><span id="typing-text"></span></div>
+            </div>
+
+            <!-- About Section -->
+            <div class="about-card">
+                <p>
+                    أنا <strong>مطور Flutter</strong> متخصّص في بناء تطبيقات الأندرويد والـ Cross-Platform التي تجمع بين الأداء العالي وجمال التصميم وقابلية التوسع. أهتم بتطبيق مفاهيم الـ <strong>Clean Code</strong> وإدارة الحالة (<strong>State Management</strong>) بشكل مدروس، لأن كتابة الكود بالنسبة لي لا تتعلق فقط بجعل التطبيق يعمل، بل ببناء أنظمة منظمة، سهلة التطوير والصيانة على المدى الطويل.
+                </p>
+                <p style="margin-top: 15px;">
+                    بعيدًا عن البرمجة، أنا <strong>لاعب شطرنج نشط</strong>؛ اللعبة بالنسبة لي ليست مجرد تسلية، بل وسيلة ساهمت بشكل كبير في تطوير أسلوبي في التحليل، التركيز، وطريقة التفكير وحل المشكلات الهندسية بشكل عام.
+                </p>
+            </div>
+
+            <!-- Social Accounts -->
+            <div class="links-grid">
+                <a href="https://github.com/QuasarReal" target="_blank" rel="noopener noreferrer" class="link-item" aria-label="GitHub Profile">
+                    <span>GitHub</span>
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.chess.com/member/QuasarReal" target="_blank" rel="noopener noreferrer" class="link-item" aria-label="Chess.com Profile">
+                    <span>Chess.com</span>
+                    <i class="fas fa-chess-knight"></i>
+                </a>
+                <a href="https://x.com/QuasarReall" target="_blank" rel="noopener noreferrer" class="link-item" aria-label="X / Twitter Profile">
+                    <span>X / Twitter</span>
+                    <i class="fab fa-x-twitter"></i>
+                </a>
+                <a href="https://www.tiktok.com/@quasar.real" target="_blank" rel="noopener noreferrer" class="link-item" aria-label="TikTok Profile">
+                    <span>TikTok</span>
+                    <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="https://www.instagram.com/quasar.real" target="_blank" rel="noopener noreferrer" class="link-item" aria-label="Instagram Profile">
+                    <span>Instagram</span>
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <p>&copy; 2026 Quasar. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Typing Effect Script -->
+    <script>
+        (function() {
+            const typingEl = document.getElementById('typing-text');
+            const phrases = [
+                'Flutter Developer',
+                'Chess Player',
+                'Clean Code Advocate',
+                'Cross-Platform Engineer',
+                'Problem Solver'
+            ];
+            let phraseIndex = 0;
+            let charIndex = 0;
+            let isDeleting = false;
+            const TYPING_SPEED = 90;
+            const DELETING_SPEED = 40;
+            const PAUSE_AFTER_TYPE = 2500;
+            const PAUSE_AFTER_DELETE = 600;
+
+            function type() {
+                const currentPhrase = phrases[phraseIndex];
+
+                if (!isDeleting) {
+                    typingEl.textContent = currentPhrase.substring(0, charIndex + 1);
+                    charIndex++;
+
+                    if (charIndex === currentPhrase.length) {
+                        isDeleting = true;
+                        // Glow pulse when phrase completes
+                        typingEl.style.textShadow = '0 0 18px rgba(255, 183, 0, 0.5), 0 0 30px rgba(255, 183, 0, 0.25)';
+                        setTimeout(() => {
+                            typingEl.style.textShadow = '0 0 12px rgba(255, 183, 0, 0.25)';
+                            type();
+                        }, PAUSE_AFTER_TYPE);
+                        return;
+                    }
+                    // Slight random speed variation for natural feel
+                    const speed = TYPING_SPEED + Math.random() * 30 - 15;
+                    setTimeout(type, speed);
+                } else {
+                    typingEl.textContent = currentPhrase.substring(0, charIndex - 1);
+                    charIndex--;
+
+                    if (charIndex === 0) {
+                        isDeleting = false;
+                        phraseIndex = (phraseIndex + 1) % phrases.length;
+                        setTimeout(type, PAUSE_AFTER_DELETE);
+                        return;
+                    }
+                    // Faster delete with slight acceleration at end
+                    const acceleration = charIndex < 3 ? 0.6 : 1;
+                    setTimeout(type, DELETING_SPEED * acceleration);
+                }
+            }
+
+            // Start typing after page animations settle
+            setTimeout(type, 1400);
+        })();
+    </script>
+
+    <!-- Three.js Scene -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+        // ─── CONFIGURATION ───────────────────────────────────────────
+        const BLACK_HOLE_RADIUS = 1.35;
+        const DISK_INNER_RADIUS = BLACK_HOLE_RADIUS + 0.2;
+        const DISK_OUTER_RADIUS = 8.0;
+        let DISK_TILT_ANGLE = Math.PI / 14;
+
+        // ─── SCENE SETUP ─────────────────────────────────────────────
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+
+        const blackHoleGroup = new THREE.Group();
+        scene.add(blackHoleGroup);
+
+        // ─── RESPONSIVE CAMERA ───────────────────────────────────────
+        function getResponsiveCameraZ() {
+            const aspect = window.innerWidth / window.innerHeight;
+            const isMobile = window.innerWidth <= 600;
+            
+            if (isMobile) {
+                if (aspect < 0.65) return 10.5;
+                if (aspect < 0.85) return 9.5;
+                if (aspect < 1.0)  return 8.5;
+            }
+            
+            return 14.80;
+        }
+
+        const canvasEl = document.getElementById('three-canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvasEl,
+            antialias: true,
+            powerPreference: "high-performance"
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.25;
+        renderer.setClearColor(0x000000, 1.0);
+
+        // ─── POST-PROCESSING ─────────────────────────────────────────
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.9, 0.6, 0.75
+        );
+        composer.addPass(bloomPass);
+
+        const lensingShader = {
+            uniforms: {
+                "tDiffuse": { value: null },
+                "blackHoleScreenPos": { value: new THREE.Vector2(0.5, 0.5) },
+                "lensingStrength": { value: 0.12 },
+                "lensingRadius": { value: 0.3 },
+                "aspectRatio": { value: window.innerWidth / window.innerHeight },
+                "chromaticAberration": { value: 0.005 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec2 blackHoleScreenPos;
+                uniform float lensingStrength;
+                uniform float lensingRadius;
+                uniform float aspectRatio;
+                uniform float chromaticAberration;
+                varying vec2 vUv;
+
+                void main() {
+                    vec2 screenPos = vUv;
+                    vec2 toCenter = screenPos - blackHoleScreenPos;
+                    toCenter.x *= aspectRatio;
+                    float dist = length(toCenter);
+
+                    float distortionAmount = lensingStrength / (dist * dist + 0.003);
+                    distortionAmount = clamp(distortionAmount, 0.0, 0.7);
+                    float falloff = smoothstep(lensingRadius, lensingRadius * 0.3, dist);
+                    distortionAmount *= falloff;
+
+                    vec2 offset = normalize(toCenter) * distortionAmount;
+                    offset.x /= aspectRatio;
+
+                    vec2 distortedUvR = screenPos - offset * (1.0 + chromaticAberration);
+                    vec2 distortedUvG = screenPos - offset;
+                    vec2 distortedUvB = screenPos - offset * (1.0 - chromaticAberration);
+
+                    float r = texture2D(tDiffuse, distortedUvR).r;
+                    float g = texture2D(tDiffuse, distortedUvG).g;
+                    float b = texture2D(tDiffuse, distortedUvB).b;
+
+                    gl_FragColor = vec4(r, g, b, 1.0);
+                }
+            `
+        };
+        const lensingPass = new ShaderPass(lensingShader);
+        composer.addPass(lensingPass);
+
+        // ─── CAMERA LOCKED ───────────────────────────────────────────
+        camera.lookAt(0, 0, 0);
+
+        // ─── STARFIELD (optimized for mobile) ────────────────────────
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = window.innerWidth <= 600 ? 25000 : 100000;
+        const starPositions = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+        const starSizes = new Float32Array(starCount);
+        const starTwinkle = new Float32Array(starCount);
+        const starFieldRadius = 2000;
+
+        for (let i = 0; i < starCount; i++) {
+            const i3 = i * 3;
+            const phi = Math.acos(-1 + (2 * i) / starCount);
+            const theta = Math.sqrt(starCount * Math.PI) * phi;
+            const radius = Math.cbrt(Math.random()) * starFieldRadius + 100;
+
+            starPositions[i3]     = radius * Math.sin(phi) * Math.cos(theta);
+            starPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            starPositions[i3 + 2] = radius * Math.cos(phi);
+
+            const brightness = Math.random() * 0.7 + 0.3;
+            const whiteColor = new THREE.Color(0xffffff);
+            whiteColor.multiplyScalar(brightness);
+            
+            starColors[i3] = whiteColor.r;
+            starColors[i3 + 1] = whiteColor.g;
+            starColors[i3 + 2] = whiteColor.b;
+            starSizes[i] = THREE.MathUtils.randFloat(0.6, 2.8);
+            starTwinkle[i] = Math.random() * Math.PI * 2;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+        starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+        starGeometry.setAttribute('twinkle', new THREE.BufferAttribute(starTwinkle, 1));
+
+        const starMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uPixelRatio: { value: renderer.getPixelRatio() }
+            },
+            vertexShader: `
+                uniform float uTime;
+                uniform float uPixelRatio;
+                attribute float size;
+                attribute float twinkle;
+                varying vec3 vColor;
+                varying float vTwinkle;
+                void main() {
+                    vColor = color;
+                    vTwinkle = sin(uTime * 2.2 + twinkle) * 0.5 + 0.5;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * uPixelRatio * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                varying float vTwinkle;
+                void main() {
+                    float dist = distance(gl_PointCoord, vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                    alpha *= (0.2 + vTwinkle * 0.8);
+                    gl_FragColor = vec4(vColor, alpha);
+                }
+            `,
+            transparent: true,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const starsMesh = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starsMesh);
+
+        // ─── EVENT HORIZON GLOW ──────────────────────────────────────
+        const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, 128, 64);
+        const eventHorizonMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0 },
+                uCameraPosition: { value: camera.position }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform vec3 uCameraPosition;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                void main() {
+                    vec3 viewDirection = normalize(uCameraPosition - vPosition);
+                    float fresnel = 1.0 - abs(dot(vNormal, viewDirection));
+                    fresnel = pow(fresnel, 2.5);
+                    vec3 glowColor = vec3(1.0, 0.58, 0.05);
+                    float pulse = sin(uTime * 0.5) * 0.12 + 0.88;
+                    gl_FragColor = vec4(glowColor * fresnel * pulse, fresnel * 0.45);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide
+        });
+        const eventHorizon = new THREE.Mesh(eventHorizonGeom, eventHorizonMat);
+        blackHoleGroup.add(eventHorizon);
+
+        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, 64, 64);
+        const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const blackHoleMesh = new THREE.Mesh(blackHoleGeom, blackHoleMat);
+        blackHoleMesh.renderOrder = 0;
+        blackHoleGroup.add(blackHoleMesh);
+
+        // ─── ACCRETION DISK ──────────────────────────────────────────
+        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, 256, 128);
+        const diskMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime: { value: 0.0 },
+                uColorHot:   { value: new THREE.Color(0xffffff) },
+                uColorMid1:  { value: new THREE.Color(0xffcc33) },
+                uColorMid2:  { value: new THREE.Color(0xff8800) },
+                uColorMid3:  { value: new THREE.Color(0xcc5500) },
+                uColorOuter: { value: new THREE.Color(0x551a00) },
+                uNoiseScale: { value: 2.6 },
+                uFlowSpeed:  { value: 0.05 },
+                uDensity:    { value: 1.35 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying float vRadius;
+                varying float vAngle;
+                void main() {
+                    vUv = uv;
+                    vRadius = length(position.xy);
+                    vAngle = atan(position.y, position.x);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform vec3 uColorHot;
+                uniform vec3 uColorMid1;
+                uniform vec3 uColorMid2;
+                uniform vec3 uColorMid3;
+                uniform vec3 uColorOuter;
+                uniform float uNoiseScale;
+                uniform float uFlowSpeed;
+                uniform float uDensity;
+
+                varying vec2 vUv;
+                varying float vRadius;
+                varying float vAngle;
+
+                vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+                float snoise(vec3 v) {
+                    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                    vec3 i  = floor(v + dot(v, C.yyy));
+                    vec3 x0 = v - i + dot(i, C.xxx);
+                    vec3 g = step(x0.yzx, x0.xyz);
+                    vec3 l = 1.0 - g;
+                    vec3 i1 = min(g.xyz, l.zxy);
+                    vec3 i2 = max(g.xyz, l.zxy);
+                    vec3 x1 = x0 - i1 + C.xxx;
+                    vec3 x2 = x0 - i2 + C.yyy;
+                    vec3 x3 = x0 - D.yyy;
+                    i = mod289(i);
+                    vec4 p = permute(permute(permute(
+                             i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                    float n_ = 0.142857142857;
+                    vec3  ns = n_ * D.wyz - D.xzx;
+                    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                    vec4 x_ = floor(j * ns.z);
+                    vec4 y_ = floor(j - 7.0 * x_);
+                    vec4 x = x_ * ns.x + ns.yyyy;
+                    vec4 y = y_ * ns.x + ns.yyyy;
+                    vec4 h = 1.0 - abs(x) - abs(y);
+                    vec4 b0 = vec4(x.xy, y.xy);
+                    vec4 b1 = vec4(x.zw, y.zw);
+                    vec4 s0 = floor(b0)*2.0 + 1.0;
+                    vec4 s1 = floor(b1)*2.0 + 1.0;
+                    vec4 sh = -step(h, vec4(0.0));
+                    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                    vec3 p0 = vec3(a0.xy,h.x);
+                    vec3 p1 = vec3(a0.zw,h.y);
+                    vec3 p2 = vec3(a1.xy,h.z);
+                    vec3 p3 = vec3(a1.zw,h.w);
+                    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                    m = m * m;
+                    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                }
+
+                void main() {
+                    float normalizedRadius = smoothstep(${DISK_INNER_RADIUS.toFixed(2)}, ${DISK_OUTER_RADIUS.toFixed(2)}, vRadius);
+
+                    float spiral = vAngle * 3.0 - (1.0 / (normalizedRadius + 0.1)) * 2.0;
+                    vec2 noiseUv = vec2(
+                        vUv.x + uTime * uFlowSpeed * (2.0 / (vRadius * 0.3 + 1.0)) + sin(spiral) * 0.1,
+                        vUv.y * 0.8 + cos(spiral) * 0.1
+                    );
+                    float noiseVal1 = snoise(vec3(noiseUv * uNoiseScale, uTime * 0.04));
+                    float noiseVal2 = snoise(vec3(noiseUv * uNoiseScale * 3.0 + 0.8, uTime * 0.05));
+                    float noiseVal3 = snoise(vec3(noiseUv * uNoiseScale * 6.0 + 1.5, uTime * 0.06));
+
+                    float noiseVal = (noiseVal1 * 0.45 + noiseVal2 * 0.35 + noiseVal3 * 0.2);
+                    noiseVal = (noiseVal + 1.0) * 0.5;
+
+                    vec3 color = uColorOuter;
+                    color = mix(color, uColorMid3, smoothstep(0.0, 0.25, normalizedRadius));
+                    color = mix(color, uColorMid2, smoothstep(0.2, 0.55, normalizedRadius));
+                    color = mix(color, uColorMid1, smoothstep(0.5, 0.75, normalizedRadius));
+                    color = mix(color, uColorHot, smoothstep(0.7, 0.95, normalizedRadius));
+
+                    color *= (0.5 + noiseVal * 1.0);
+                    float brightness = pow(1.0 - normalizedRadius, 1.0) * 3.5 + 0.5;
+                    brightness *= (0.3 + noiseVal * 2.2);
+
+                    float pulse = sin(uTime * 0.4 + normalizedRadius * 12.0 + vAngle * 2.0) * 0.15 + 0.85;
+                    brightness *= pulse;
+
+                    float alpha = uDensity * (0.2 + noiseVal * 0.9);
+                    alpha *= smoothstep(0.0, 0.15, normalizedRadius);
+                    alpha *= (1.0 - smoothstep(0.85, 1.0, normalizedRadius));
+                    alpha = clamp(alpha, 0.0, 1.0);
+
+                    gl_FragColor = vec4(color * brightness, alpha);
+                }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
+        accretionDisk.rotation.x = DISK_TILT_ANGLE;
+        accretionDisk.renderOrder = 1;
+        blackHoleGroup.add(accretionDisk);
+
+        // ─── FINAL CAMERA POSITION ───────────────────────────────────
+        camera.position.set(0.00, 2.60, getResponsiveCameraZ());
+        camera.lookAt(0, 0, 0);
+
+        accretionDisk.rotation.x = 1.57;
+        blackHoleGroup.position.set(-0.15, 0.10, 0);
+        blackHoleGroup.rotation.z = 0.15;
+
+        lensingPass.uniforms.lensingStrength.value = 0.61;
+        lensingPass.uniforms.lensingRadius.value = 0.22;
+
+        // ─── RESIZE HANDLER ──────────────────────────────────────────
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.position.z = getResponsiveCameraZ();
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+            lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        });
+
+        // ─── ANIMATION LOOP ──────────────────────────────────────────
+        const clock = new THREE.Clock();
+        const blackHoleScreenPosVec3 = new THREE.Vector3();
+        let lastScrollY = window.scrollY;
+
+        let isScrolling = false;
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            isScrolling = true;
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // FIX: getDelta() must be called BEFORE getElapsedTime()
+            const deltaTime = clock.getDelta();
+            const elapsedTime = clock.getElapsedTime();
+
+            // Pass real time to shaders
+            diskMaterial.uniforms.uTime.value = elapsedTime;
+            starMaterial.uniforms.uTime.value = elapsedTime;
+            eventHorizonMat.uniforms.uTime.value = elapsedTime;
+            eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
+
+            // Update gravitational lensing screen-space position
+            blackHoleMesh.getWorldPosition(blackHoleScreenPosVec3).project(camera);
+            lensingPass.uniforms.blackHoleScreenPos.value.set(
+                (blackHoleScreenPosVec3.x + 1) / 2,
+                (blackHoleScreenPosVec3.y + 1) / 2
+            );
+
+            // Reduce rotation speed when scrolling for performance
+            const rotationMultiplier = isScrolling ? 0.3 : 1.0;
+            
+            // Slow cosmic rotation
+            starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
+            starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
+            accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
+
+            composer.render(deltaTime);
+        }
+
+        animate();
+
+
+    </script>
+</body>
+</html>
