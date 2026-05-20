@@ -1017,9 +1017,9 @@
             const isMobile = window.innerWidth <= 600;
             
             if (isMobile) {
-                if (aspect < 0.65) return 16.0;
-                if (aspect < 0.85) return 14.0;
-                if (aspect < 1.0)  return 12.5;
+                if (aspect < 0.65) return 22.0;
+                if (aspect < 0.85) return 19.0;
+                if (aspect < 1.0)  return 17.0;
             }
             
             return 14.80;
@@ -1041,21 +1041,21 @@
         }
         renderer.setClearColor(0x000000, 1.0);
 
-        // ─── POST-PROCESSING (desktop only) ────────────────────────────
+        // ─── POST-PROCESSING ────────────────────────────────────────
         let composer = null;
         let bloomPass = null;
         let lensingPass = null;
 
-        if (!isMobile) {
-            composer = new EffectComposer(renderer);
-            composer.addPass(new RenderPass(scene, camera));
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
 
-            bloomPass = new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                0.9, 0.6, 0.75
-            );
-            composer.addPass(bloomPass);
-        }
+        bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            isMobile ? 0.5 : 0.9,
+            isMobile ? 0.4 : 0.6,
+            isMobile ? 0.7 : 0.75
+        );
+        composer.addPass(bloomPass);
 
         // ─── GRAVITATIONAL LENSING (desktop only) ─────────────────────
         if (!isMobile) {
@@ -1119,10 +1119,10 @@
 
         // ─── STARFIELD ─────────────────────────────────────────────
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = isMobile ? 3000 : 100000;
+        const starCount = 100000;
         const starPositions = new Float32Array(starCount * 3);
         const starColors = new Float32Array(starCount * 3);
-        const starFieldRadius = isMobile ? 800 : 2000;
+        const starFieldRadius = 2000;
 
         for (let i = 0; i < starCount; i++) {
             const i3 = i * 3;
@@ -1211,10 +1211,10 @@
             scene.add(starsMesh);
         }
 
-        // ─── EVENT HORIZON GLOW (desktop only) ─────────────────────────
+        // ─── EVENT HORIZON GLOW ─────────────────────────────────────
         let eventHorizonMat;
-        if (!isMobile) {
-            const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, 128, 64);
+        {
+            const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, isMobile ? 48 : 128, isMobile ? 32 : 64);
             eventHorizonMat = new THREE.ShaderMaterial({
                 uniforms: {
                     uTime: { value: 0 },
@@ -1251,14 +1251,14 @@
             blackHoleGroup.add(eventHorizon);
         }
 
-        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, 64, 64);
+        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, isMobile ? 32 : 64, isMobile ? 32 : 64);
         const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
         const blackHoleMesh = new THREE.Mesh(blackHoleGeom, blackHoleMat);
         blackHoleMesh.renderOrder = 0;
         blackHoleGroup.add(blackHoleMesh);
 
         // ─── ACCRETION DISK ──────────────────────────────────────────
-        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, 256, 128);
+        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, isMobile ? 128 : 256, isMobile ? 64 : 128);
         const diskMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0.0 },
@@ -1405,9 +1405,9 @@
             lensingPass.uniforms.lensingRadius.value = 0.22;
         }
 
-        // ─── HIDE BLACK HOLE ON MOBILE ──────────────────────────────────
+        // ─── SCALE BLACK HOLE ON MOBILE ──────────────────────────────────
         if (isMobile) {
-            blackHoleGroup.visible = false;
+            blackHoleGroup.scale.setScalar(0.5);
         }
 
         // ─── RESIZE HANDLER ──────────────────────────────────────────
@@ -1419,7 +1419,9 @@
             if (composer) {
                 composer.setSize(window.innerWidth, window.innerHeight);
                 bloomPass.resolution.set(window.innerWidth, window.innerHeight);
-                lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+                if (lensingPass) {
+                    lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+                }
             }
             renderer.setPixelRatio(window.innerWidth <= 600 ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 1.5));
         });
@@ -1453,7 +1455,7 @@
             const elapsedTime = clock.getElapsedTime();
 
             if (!isMobile) {
-                // Desktop: full shaders + post-processing
+                // Desktop: full shaders + post-processing + lensing
                 diskMaterial.uniforms.uTime.value = elapsedTime;
                 starMaterial.uniforms.uTime.value = elapsedTime;
                 eventHorizonMat.uniforms.uTime.value = elapsedTime;
@@ -1472,9 +1474,16 @@
 
                 composer.render(deltaTime);
             } else {
-                // Mobile: stars only, direct render, no post-processing
-                starsMesh.rotation.y += deltaTime * 0.001;
-                renderer.render(scene, camera);
+                // Mobile: stars + black hole (scaled 0.5), bloom post-processing
+                diskMaterial.uniforms.uTime.value = elapsedTime;
+                eventHorizonMat.uniforms.uTime.value = elapsedTime;
+                eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
+
+                const rotationMultiplier = isScrolling ? 0.3 : 1.0;
+                starsMesh.rotation.y += deltaTime * 0.001 * rotationMultiplier;
+                accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
+
+                composer.render(deltaTime);
             }
         }
         let lastFrameTime = 0;
