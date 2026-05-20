@@ -1000,100 +1000,109 @@
         }
 
         const canvasEl = document.getElementById('three-canvas');
+        const isMobile = window.innerWidth <= 600;
         const renderer = new THREE.WebGLRenderer({
             canvas: canvasEl,
-            antialias: true,
-            powerPreference: "high-performance"
+            antialias: !isMobile,
+            powerPreference: isMobile ? "low-power" : "high-performance"
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        const isMobile = window.innerWidth <= 600;
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.0 : 1.5));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.25;
+        if (!isMobile) {
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.25;
+        }
         renderer.setClearColor(0x000000, 1.0);
 
-        // ─── POST-PROCESSING ─────────────────────────────────────────
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
+        // ─── POST-PROCESSING (desktop only) ────────────────────────────
+        let composer = null;
+        let bloomPass = null;
+        let lensingPass = null;
 
-        const bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            isMobile ? 0.5 : 0.9, isMobile ? 0.4 : 0.6, isMobile ? 0.85 : 0.75
-        );
-        composer.addPass(bloomPass);
+        if (!isMobile) {
+            composer = new EffectComposer(renderer);
+            composer.addPass(new RenderPass(scene, camera));
 
-        const lensingShader = {
-            uniforms: {
-                "tDiffuse": { value: null },
-                "blackHoleScreenPos": { value: new THREE.Vector2(0.5, 0.5) },
-                "lensingStrength": { value: 0.12 },
-                "lensingRadius": { value: 0.3 },
-                "aspectRatio": { value: window.innerWidth / window.innerHeight },
-                "chromaticAberration": { value: 0.005 }
-            },
-            vertexShader: `
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform sampler2D tDiffuse;
-                uniform vec2 blackHoleScreenPos;
-                uniform float lensingStrength;
-                uniform float lensingRadius;
-                uniform float aspectRatio;
-                uniform float chromaticAberration;
-                varying vec2 vUv;
+            bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.9, 0.6, 0.75
+            );
+            composer.addPass(bloomPass);
+        }
 
-                void main() {
-                    vec2 screenPos = vUv;
-                    vec2 toCenter = screenPos - blackHoleScreenPos;
-                    toCenter.x *= aspectRatio;
-                    float dist = length(toCenter);
+        // ─── GRAVITATIONAL LENSING (desktop only) ─────────────────────
+        if (!isMobile) {
+            const lensingShader = {
+                uniforms: {
+                    "tDiffuse": { value: null },
+                    "blackHoleScreenPos": { value: new THREE.Vector2(0.5, 0.5) },
+                    "lensingStrength": { value: 0.12 },
+                    "lensingRadius": { value: 0.3 },
+                    "aspectRatio": { value: window.innerWidth / window.innerHeight },
+                    "chromaticAberration": { value: 0.005 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D tDiffuse;
+                    uniform vec2 blackHoleScreenPos;
+                    uniform float lensingStrength;
+                    uniform float lensingRadius;
+                    uniform float aspectRatio;
+                    uniform float chromaticAberration;
+                    varying vec2 vUv;
 
-                    float distortionAmount = lensingStrength / (dist * dist + 0.003);
-                    distortionAmount = clamp(distortionAmount, 0.0, 0.7);
-                    float falloff = smoothstep(lensingRadius, lensingRadius * 0.3, dist);
-                    distortionAmount *= falloff;
+                    void main() {
+                        vec2 screenPos = vUv;
+                        vec2 toCenter = screenPos - blackHoleScreenPos;
+                        toCenter.x *= aspectRatio;
+                        float dist = length(toCenter);
 
-                    vec2 offset = normalize(toCenter) * distortionAmount;
-                    offset.x /= aspectRatio;
+                        float distortionAmount = lensingStrength / (dist * dist + 0.003);
+                        distortionAmount = clamp(distortionAmount, 0.0, 0.7);
+                        float falloff = smoothstep(lensingRadius, lensingRadius * 0.3, dist);
+                        distortionAmount *= falloff;
 
-                    vec2 distortedUvR = screenPos - offset * (1.0 + chromaticAberration);
-                    vec2 distortedUvG = screenPos - offset;
-                    vec2 distortedUvB = screenPos - offset * (1.0 - chromaticAberration);
+                        vec2 offset = normalize(toCenter) * distortionAmount;
+                        offset.x /= aspectRatio;
 
-                    float r = texture2D(tDiffuse, distortedUvR).r;
-                    float g = texture2D(tDiffuse, distortedUvG).g;
-                    float b = texture2D(tDiffuse, distortedUvB).b;
+                        vec2 distortedUvR = screenPos - offset * (1.0 + chromaticAberration);
+                        vec2 distortedUvG = screenPos - offset;
+                        vec2 distortedUvB = screenPos - offset * (1.0 - chromaticAberration);
 
-                    gl_FragColor = vec4(r, g, b, 1.0);
-                }
-            `
-        };
-        const lensingPass = new ShaderPass(lensingShader);
-        composer.addPass(lensingPass);
+                        float r = texture2D(tDiffuse, distortedUvR).r;
+                        float g = texture2D(tDiffuse, distortedUvG).g;
+                        float b = texture2D(tDiffuse, distortedUvB).b;
+
+                        gl_FragColor = vec4(r, g, b, 1.0);
+                    }
+                `
+            };
+            lensingPass = new ShaderPass(lensingShader);
+            composer.addPass(lensingPass);
+        }
 
         // ─── CAMERA LOCKED ───────────────────────────────────────────
         camera.lookAt(0, 0, 0);
 
-        // ─── STARFIELD (optimized for mobile) ────────────────────────
+        // ─── STARFIELD ─────────────────────────────────────────────
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = window.innerWidth <= 600 ? 12000 : 100000;
+        const starCount = isMobile ? 3000 : 100000;
         const starPositions = new Float32Array(starCount * 3);
         const starColors = new Float32Array(starCount * 3);
-        const starSizes = new Float32Array(starCount);
-        const starTwinkle = new Float32Array(starCount);
-        const starFieldRadius = 2000;
+        const starFieldRadius = isMobile ? 800 : 2000;
 
         for (let i = 0; i < starCount; i++) {
             const i3 = i * 3;
             const phi = Math.acos(-1 + (2 * i) / starCount);
             const theta = Math.sqrt(starCount * Math.PI) * phi;
-            const radius = Math.cbrt(Math.random()) * starFieldRadius + 100;
+            const radius = Math.cbrt(Math.random()) * starFieldRadius + 50;
 
             starPositions[i3]     = radius * Math.sin(phi) * Math.cos(theta);
             starPositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
@@ -1106,98 +1115,124 @@
             starColors[i3] = whiteColor.r;
             starColors[i3 + 1] = whiteColor.g;
             starColors[i3 + 2] = whiteColor.b;
-            starSizes[i] = THREE.MathUtils.randFloat(0.6, 2.8);
-            starTwinkle[i] = Math.random() * Math.PI * 2;
         }
         starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
         starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-        starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
-        starGeometry.setAttribute('twinkle', new THREE.BufferAttribute(starTwinkle, 1));
 
-        const starMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime: { value: 0 },
-                uPixelRatio: { value: renderer.getPixelRatio() }
-            },
-            vertexShader: `
-                uniform float uTime;
-                uniform float uPixelRatio;
-                attribute float size;
-                attribute float twinkle;
-                varying vec3 vColor;
-                varying float vTwinkle;
-                void main() {
-                    vColor = color;
-                    vTwinkle = sin(uTime * 2.2 + twinkle) * 0.5 + 0.5;
-                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    gl_PointSize = size * uPixelRatio * (300.0 / -mvPosition.z);
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            fragmentShader: `
-                varying vec3 vColor;
-                varying float vTwinkle;
-                void main() {
-                    float dist = distance(gl_PointCoord, vec2(0.5));
-                    if (dist > 0.5) discard;
-                    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-                    alpha *= (0.2 + vTwinkle * 0.8);
-                    gl_FragColor = vec4(vColor, alpha);
-                }
-            `,
-            transparent: true,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
-        const starsMesh = new THREE.Points(starGeometry, starMaterial);
-        scene.add(starsMesh);
+        let starsMesh;
+        let starMaterial;
 
-        // ─── EVENT HORIZON GLOW ──────────────────────────────────────
-        const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, isMobile ? 48 : 128, isMobile ? 32 : 64);
-        const eventHorizonMat = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime: { value: 0 },
-                uCameraPosition: { value: camera.position }
-            },
-            vertexShader: `
-                varying vec3 vNormal;
-                varying vec3 vPosition;
-                void main() {
-                    vNormal = normalize(normalMatrix * normal);
-                    vPosition = position;
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform float uTime;
-                uniform vec3 uCameraPosition;
-                varying vec3 vNormal;
-                varying vec3 vPosition;
-                void main() {
-                    vec3 viewDirection = normalize(uCameraPosition - vPosition);
-                    float fresnel = 1.0 - abs(dot(vNormal, viewDirection));
-                    fresnel = pow(fresnel, 2.5);
-                    vec3 glowColor = vec3(1.0, 0.58, 0.05);
-                    float pulse = sin(uTime * 0.5) * 0.12 + 0.88;
-                    gl_FragColor = vec4(glowColor * fresnel * pulse, fresnel * 0.45);
-                }
-            `,
-            transparent: true,
-            blending: THREE.AdditiveBlending,
-            side: THREE.BackSide
-        });
-        const eventHorizon = new THREE.Mesh(eventHorizonGeom, eventHorizonMat);
-        blackHoleGroup.add(eventHorizon);
+        if (isMobile) {
+            // Simple PointsMaterial on mobile - no shaders, no twinkle
+            starMaterial = new THREE.PointsMaterial({
+                size: 1.8,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                sizeAttenuation: true
+            });
+            starsMesh = new THREE.Points(starGeometry, starMaterial);
+            scene.add(starsMesh);
+        } else {
+            const starSizes = new Float32Array(starCount);
+            const starTwinkle = new Float32Array(starCount);
+            for (let i = 0; i < starCount; i++) {
+                starSizes[i] = THREE.MathUtils.randFloat(0.6, 2.8);
+                starTwinkle[i] = Math.random() * Math.PI * 2;
+            }
+            starGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+            starGeometry.setAttribute('twinkle', new THREE.BufferAttribute(starTwinkle, 1));
 
-        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, isMobile ? 32 : 64, isMobile ? 32 : 64);
+            starMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uPixelRatio: { value: renderer.getPixelRatio() }
+                },
+                vertexShader: `
+                    uniform float uTime;
+                    uniform float uPixelRatio;
+                    attribute float size;
+                    attribute float twinkle;
+                    varying vec3 vColor;
+                    varying float vTwinkle;
+                    void main() {
+                        vColor = color;
+                        vTwinkle = sin(uTime * 2.2 + twinkle) * 0.5 + 0.5;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * uPixelRatio * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    varying float vTwinkle;
+                    void main() {
+                        float dist = distance(gl_PointCoord, vec2(0.5));
+                        if (dist > 0.5) discard;
+                        float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
+                        alpha *= (0.2 + vTwinkle * 0.8);
+                        gl_FragColor = vec4(vColor, alpha);
+                    }
+                `,
+                transparent: true,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            starsMesh = new THREE.Points(starGeometry, starMaterial);
+            scene.add(starsMesh);
+        }
+
+        // ─── EVENT HORIZON GLOW (desktop only) ─────────────────────────
+        let eventHorizonMat;
+        if (!isMobile) {
+            const eventHorizonGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS * 1.04, 128, 64);
+            eventHorizonMat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uCameraPosition: { value: camera.position }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float uTime;
+                    uniform vec3 uCameraPosition;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    void main() {
+                        vec3 viewDirection = normalize(uCameraPosition - vPosition);
+                        float fresnel = 1.0 - abs(dot(vNormal, viewDirection));
+                        fresnel = pow(fresnel, 2.5);
+                        vec3 glowColor = vec3(1.0, 0.58, 0.05);
+                        float pulse = sin(uTime * 0.5) * 0.12 + 0.88;
+                        gl_FragColor = vec4(glowColor * fresnel * pulse, fresnel * 0.45);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            });
+            const eventHorizon = new THREE.Mesh(eventHorizonGeom, eventHorizonMat);
+            blackHoleGroup.add(eventHorizon);
+        }
+
+        const blackHoleGeom = new THREE.SphereGeometry(BLACK_HOLE_RADIUS, 64, 64);
         const blackHoleMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
         const blackHoleMesh = new THREE.Mesh(blackHoleGeom, blackHoleMat);
         blackHoleMesh.renderOrder = 0;
         blackHoleGroup.add(blackHoleMesh);
 
         // ─── ACCRETION DISK ──────────────────────────────────────────
-        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, isMobile ? 128 : 256, isMobile ? 64 : 128);
+        const diskGeometry = new THREE.RingGeometry(DISK_INNER_RADIUS, DISK_OUTER_RADIUS, 256, 128);
         const diskMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 uTime: { value: 0.0 },
@@ -1339,14 +1374,14 @@
         blackHoleGroup.position.set(-0.15, 0.10, 0);
         blackHoleGroup.rotation.z = 0.15;
 
-        lensingPass.uniforms.lensingStrength.value = 0.61;
-        lensingPass.uniforms.lensingRadius.value = 0.22;
+        if (!isMobile) {
+            lensingPass.uniforms.lensingStrength.value = 0.61;
+            lensingPass.uniforms.lensingRadius.value = 0.22;
+        }
 
         // ─── HIDE BLACK HOLE ON MOBILE ──────────────────────────────────
         if (isMobile) {
             blackHoleGroup.visible = false;
-            lensingPass.uniforms.lensingStrength.value = 0;
-            lensingPass.uniforms.lensingRadius.value = 0;
         }
 
         // ─── RESIZE HANDLER ──────────────────────────────────────────
@@ -1355,9 +1390,11 @@
             camera.position.z = getResponsiveCameraZ();
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
-            bloomPass.resolution.set(window.innerWidth, window.innerHeight);
-            lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+            if (composer) {
+                composer.setSize(window.innerWidth, window.innerHeight);
+                bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+                lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
+            }
             renderer.setPixelRatio(window.innerWidth <= 600 ? Math.min(window.devicePixelRatio, 1.0) : Math.min(window.devicePixelRatio, 1.5));
         });
 
@@ -1378,34 +1415,43 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            
-            // FIX: getDelta() must be called BEFORE getElapsedTime()
+
+            // Throttle to ~30fps on mobile for battery & performance
+            if (isMobile) {
+                const now = performance.now();
+                if (now - lastFrameTime < 33) return;
+                lastFrameTime = now;
+            }
+
             const deltaTime = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
 
-            // Pass real time to shaders
-            diskMaterial.uniforms.uTime.value = elapsedTime;
-            starMaterial.uniforms.uTime.value = elapsedTime;
-            eventHorizonMat.uniforms.uTime.value = elapsedTime;
-            eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
+            if (!isMobile) {
+                // Desktop: full shaders + post-processing
+                diskMaterial.uniforms.uTime.value = elapsedTime;
+                starMaterial.uniforms.uTime.value = elapsedTime;
+                eventHorizonMat.uniforms.uTime.value = elapsedTime;
+                eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
 
-            // Update gravitational lensing screen-space position
-            blackHoleMesh.getWorldPosition(blackHoleScreenPosVec3).project(camera);
-            lensingPass.uniforms.blackHoleScreenPos.value.set(
-                (blackHoleScreenPosVec3.x + 1) / 2,
-                (blackHoleScreenPosVec3.y + 1) / 2
-            );
+                blackHoleMesh.getWorldPosition(blackHoleScreenPosVec3).project(camera);
+                lensingPass.uniforms.blackHoleScreenPos.value.set(
+                    (blackHoleScreenPosVec3.x + 1) / 2,
+                    (blackHoleScreenPosVec3.y + 1) / 2
+                );
 
-            // Reduce rotation speed when scrolling for performance
-            const rotationMultiplier = isScrolling ? 0.3 : 1.0;
-            
-            // Slow cosmic rotation
-            starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
-            starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
-            accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
+                const rotationMultiplier = isScrolling ? 0.3 : 1.0;
+                starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
+                starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
+                accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
 
-            composer.render(deltaTime);
+                composer.render(deltaTime);
+            } else {
+                // Mobile: stars only, direct render, no post-processing
+                starsMesh.rotation.y += deltaTime * 0.001;
+                renderer.render(scene, camera);
+            }
         }
+        let lastFrameTime = 0;
 
         animate();
 
