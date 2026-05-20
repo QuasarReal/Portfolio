@@ -1342,6 +1342,13 @@
         lensingPass.uniforms.lensingStrength.value = 0.61;
         lensingPass.uniforms.lensingRadius.value = 0.22;
 
+        // ─── HIDE BLACK HOLE ON MOBILE ──────────────────────────────────
+        if (isMobile) {
+            blackHoleGroup.visible = false;
+            lensingPass.uniforms.lensingStrength.value = 0;
+            lensingPass.uniforms.lensingRadius.value = 0;
+        }
+
         // ─── RESIZE HANDLER ──────────────────────────────────────────
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
