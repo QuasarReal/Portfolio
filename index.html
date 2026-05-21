@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- ═══ Primary SEO ═══ -->
-    <title>Quasar | Flutter Developer & Chess Player | Portfolio</title>
+    <title>Quasar | Portfolio</title>
     <meta name="description" content="Quasar - Flutter developer specializing in high-performance cross-platform Android applications with Clean Architecture, State Management, and scalable code. Active chess player combining strategic thinking with engineering excellence.">
     <meta name="keywords" content="Quasar, Flutter developer, Dart, Android developer, cross-platform developer, mobile app developer, Clean Code, State Management, chess player, portfolio, software engineer, تطوير تطبيقات, مطور فلاتر, شطرنج">
     <meta name="author" content="Quasar">
@@ -252,6 +252,9 @@
         }
 
         /* ─── BODY & LAYOUT ────────────────────────────────── */
+        html, body {
+            background: #000000;
+        }
         body {
             background: var(--bg-primary);
             color: var(--text-primary);
@@ -261,22 +264,17 @@
             min-height: 100vh;
             scroll-behavior: smooth;
             position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #000000;
-            z-index: -1;
+            overscroll-behavior: none;
         }
 
         #three-canvas {
-            position: fixed;
+            position: fixed !important;
             top: 0; left: 0;
-            width: 100%; height: 100%;
+            width: 100vw; height: 100vh;
             z-index: 1;
+            pointer-events: none;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
         }
 
         .page-content {
@@ -694,12 +692,6 @@
                 box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 4px 15px rgba(0, 0, 0, 0.6);
             }
 
-            /* Disable heavy CSS animations on mobile */
-            .about-card::after,
-            .profile-glow-ring {
-                animation: none !important;
-            }
-
             .page-content {
                 padding: 60px 18px 40px 18px;
             }
@@ -839,7 +831,7 @@
                     بعيدًا عن البرمجة، أنا <strong>لاعب شطرنج نشط</strong>؛ اللعبة بالنسبة لي ليست مجرد تسلية، بل وسيلة ساهمت بشكل كبير في تطوير أسلوبي في التحليل، التركيز، وطريقة التفكير وحل المشكلات الهندسية بشكل عام.
                 </p>
                 <p style="margin-top: 15px;">
-                    حاليًا هناك <strong>مشاريع كثيرة يتم التخطيط لها</strong> وهيتم تنفيذها ونشرها قريب بإذن الله، خصوصاً مشاريع متعلقة بالشطرنج. المشاريع هتشمل تطبيقات <strong>أندرويد</strong>، برامج لـ<strong>ويندوز</strong> و<strong>لينكس</strong>، بالإضافه إلى إضافات متصفح لـ<strong>كروم</strong> و<strong>بريف</strong>.
+                    حاليًا في <strong>مشاريع كتيره بيتم التخطيط ليها</strong> وهيتم تنفيذها ونشرها قريب بإذن الله، خصوصاً مشاريع متعلقة بالشطرنج. المشاريع هتشمل تطبيقات <strong>أندرويد</strong>، برامج لـ<strong>ويندوز</strong> و<strong>لينكس</strong>، بالإضافه إلى إضافات متصفح لـ<strong>كروم</strong> و<strong>بريف</strong>.
                 </p>
                 <p style="margin-top: 15px;">
                     لو حابب تساعد أو تشارك في أي مشروع، ابعتلي على <a href="https://www.tiktok.com/@quasar.real" target="_blank" rel="noopener noreferrer" style="color: var(--quasar-gold); text-decoration: none; text-shadow: 0 0 8px rgba(255, 183, 0, 0.3); transition: text-shadow 0.3s ease;" onmouseover="this.style.textShadow='0 0 14px rgba(255, 183, 0, 0.6)'" onmouseout="this.style.textShadow='0 0 8px rgba(255, 183, 0, 0.3)'">التيك توك</a> أو <a href="https://www.instagram.com/quasar.real" target="_blank" rel="noopener noreferrer" style="color: var(--quasar-gold); text-decoration: none; text-shadow: 0 0 8px rgba(255, 183, 0, 0.3); transition: text-shadow 0.3s ease;" onmouseover="this.style.textShadow='0 0 14px rgba(255, 183, 0, 0.6)'" onmouseout="this.style.textShadow='0 0 8px rgba(255, 183, 0, 0.3)'">الانستا</a>
@@ -949,7 +941,7 @@
         // ─── CONFIGURATION ───────────────────────────────────────────
         const BLACK_HOLE_RADIUS = 1.35;
         const DISK_INNER_RADIUS = BLACK_HOLE_RADIUS + 0.2;
-        let DISK_OUTER_RADIUS = window.innerWidth <= 600 ? 5.5 : 8.0;
+        let DISK_OUTER_RADIUS = 8.0;
         let DISK_TILT_ANGLE = Math.PI / 14;
 
         // ─── SCENE SETUP ─────────────────────────────────────────────
@@ -963,15 +955,6 @@
 
         // ─── RESPONSIVE CAMERA ───────────────────────────────────────
         function getResponsiveCameraZ() {
-            const aspect = window.innerWidth / window.innerHeight;
-            const isMobile = window.innerWidth <= 600;
-            
-            if (isMobile) {
-                if (aspect < 0.65) return 16.0;
-                if (aspect < 0.85) return 15.0;
-                if (aspect < 1.0)  return 14.5;
-            }
-            
             return 14.80;
         }
 
@@ -983,7 +966,7 @@
             powerPreference: "high-performance"
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setPixelRatio(window.devicePixelRatio);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.25;
@@ -1003,9 +986,8 @@
         );
         composer.addPass(bloomPass);
 
-        // ─── GRAVITATIONAL LENSING (desktop only) ─────────────────────
-        if (!isMobile) {
-            const lensingShader = {
+        // ─── GRAVITATIONAL LENSING ──────────────────────────────
+        const lensingShader = {
                 uniforms: {
                     "tDiffuse": { value: null },
                     "blackHoleScreenPos": { value: new THREE.Vector2(0.5, 0.5) },
@@ -1056,9 +1038,8 @@
                     }
                 `
             };
-            lensingPass = new ShaderPass(lensingShader);
-            composer.addPass(lensingPass);
-        }
+        lensingPass = new ShaderPass(lensingShader);
+        composer.addPass(lensingPass);
 
         // ─── CAMERA LOCKED ───────────────────────────────────────────
         camera.lookAt(0, 0, 0);
@@ -1332,31 +1313,32 @@
         blackHoleGroup.position.set(-0.15, 0.10, 0);
         blackHoleGroup.rotation.z = 0.15;
 
-        if (!isMobile) {
-            lensingPass.uniforms.lensingStrength.value = 0.61;
-            lensingPass.uniforms.lensingRadius.value = 0.22;
-        }
+        lensingPass.uniforms.lensingStrength.value = 0.61;
+        lensingPass.uniforms.lensingRadius.value = 0.22;
 
-        // ─── SCALE BLACK HOLE ON MOBILE ──────────────────────────────
+        // ─── HIDE BLACK HOLE ON MOBILE ──────────────────────────────
         if (isMobile) {
-            blackHoleGroup.scale.setScalar(0.9);
+            blackHoleGroup.visible = false;
+            lensingPass.uniforms.lensingStrength.value = 0;
         }
 
         // ─── RESIZE HANDLER ──────────────────────────────────────────
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
+        function handleResize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
             camera.position.z = getResponsiveCameraZ();
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            if (composer) {
-                composer.setSize(window.innerWidth, window.innerHeight);
-                bloomPass.resolution.set(window.innerWidth, window.innerHeight);
-                if (lensingPass) {
-                    lensingPass.uniforms.aspectRatio.value = window.innerWidth / window.innerHeight;
-                }
-            }
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        });
+            renderer.setSize(w, h);
+            composer.setSize(w, h);
+            bloomPass.resolution.set(w, h);
+            lensingPass.uniforms.aspectRatio.value = w / h;
+            renderer.setPixelRatio(window.devicePixelRatio);
+        }
+        window.addEventListener('resize', handleResize);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+        }
 
         // ─── ANIMATION LOOP ──────────────────────────────────────────
         const clock = new THREE.Clock();
@@ -1376,52 +1358,29 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Throttle to ~30fps on mobile for battery & performance
-            if (isMobile) {
-                const now = performance.now();
-                if (now - lastFrameTime < 33) return;
-                lastFrameTime = now;
-            }
+            // Full quality on all devices
 
             const deltaTime = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
 
-            if (!isMobile) {
-                // Desktop: full shaders + post-processing + lensing
-                diskMaterial.uniforms.uTime.value = elapsedTime;
-                starMaterial.uniforms.uTime.value = elapsedTime;
-                eventHorizonMat.uniforms.uTime.value = elapsedTime;
-                eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
+            diskMaterial.uniforms.uTime.value = elapsedTime;
+            starMaterial.uniforms.uTime.value = elapsedTime;
+            eventHorizonMat.uniforms.uTime.value = elapsedTime;
+            eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
 
-                blackHoleMesh.getWorldPosition(blackHoleScreenPosVec3).project(camera);
-                lensingPass.uniforms.blackHoleScreenPos.value.set(
-                    (blackHoleScreenPosVec3.x + 1) / 2,
-                    (blackHoleScreenPosVec3.y + 1) / 2
-                );
+            blackHoleMesh.getWorldPosition(blackHoleScreenPosVec3).project(camera);
+            lensingPass.uniforms.blackHoleScreenPos.value.set(
+                (blackHoleScreenPosVec3.x + 1) / 2,
+                (blackHoleScreenPosVec3.y + 1) / 2
+            );
 
-                const rotationMultiplier = isScrolling ? 0.3 : 1.0;
-                starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
-                starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
-                accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
+            const rotationMultiplier = isScrolling ? 0.3 : 1.0;
+            starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
+            starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
+            accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
 
-                composer.render(deltaTime);
-            } else {
-                // Mobile: same scene as desktop, bloom, no lensing
-                starMaterial.uniforms.uTime.value = elapsedTime;
-                diskMaterial.uniforms.uTime.value = elapsedTime;
-                eventHorizonMat.uniforms.uTime.value = elapsedTime;
-                eventHorizonMat.uniforms.uCameraPosition.value.copy(camera.position);
-
-                const rotationMultiplier = isScrolling ? 0.3 : 1.0;
-                starsMesh.rotation.y += deltaTime * 0.0015 * rotationMultiplier;
-                starsMesh.rotation.x += deltaTime * 0.0005 * rotationMultiplier;
-                accretionDisk.rotation.z += deltaTime * 0.001 * rotationMultiplier;
-
-                composer.render(deltaTime);
-            }
+            composer.render(deltaTime);
         }
-        let lastFrameTime = 0;
-
         animate();
 
 
